@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Mi Amor ❤️</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #050505;
+            color: #ff3399;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Lienzo para el efecto Matrix/Estrellas */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Contenedor principal de pantallas */
+        .contenedor {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .pantalla {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+
+        .activa {
+            display: flex;
+        }
+
+        /* --- FASE 1: CONTADOR --- */
+        #contador h1 {
+            font-size: 8rem;
+            text-shadow: 0 0 20px #ff3399;
+            animation: latido 1s infinite;
+        }
+
+        /* --- FASE 2: TEXTOS --- */
+        #pantalla-textos h2 {
+            font-size: 4rem;
+            text-shadow: 0 0 15px #ff3399;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* --- FASE 3: TARJETA INTERACTIVA --- */
+        .carta-contenedor {
+            perspective: 1000px;
+            width: 320px;
+            height: 420px;
+            cursor: pointer;
+        }
+
+        .carta {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s ease;
+        }
+
+        .carta.abierta {
+            transform: rotateY(180deg);
+        }
+
+        .cara {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(255, 51, 153, 0.4);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .cara-frontal {
+            background: linear-gradient(135deg, #1a000d, #33001a);
+            border: 2px solid #ff3399;
+        }
+
+        .cara-frontal .icono-corazon {
+            font-size: 5rem;
+            animation: flotar 2s infinite ease-in-out;
+        }
+
+        .cara-trasera {
+            background: #ffffff;
+            color: #333;
+            transform: rotateY(180deg);
+            justify-content: space-between;
+        }
+
+        .cara-trasera h3 {
+            font-family: 'Helvetica Neue', sans-serif;
+            color: #ff3399;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .fotos-slider {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .fotos-slider img {
+            width: 45%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #ff3399;
+        }
+
+        .cara-trasera p {
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 10px;
+        }
+
+        .btn-siguiente {
+            margin-top: 15px;
+            background: #ff3399;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-family: sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 51, 153, 0.3);
+        }
+
+        /* --- FASE 4: CORAZÓN DE FOTOS --- */
+        #pantalla-corazon {
+            position: relative;
+        }
+
+        .foto-corazon {
+            position: absolute;
+            width: 65px;
+            height: 65px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid #ff3399;
+            box-shadow: 0 0 10px rgba(255, 51, 153, 0.6);
+            transition: all 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translate(0, 0) scale(0);
+        }
+
+        .foto-corazon.posicionada {
+            opacity: 1;
+            transform: translate(var(--x), var(--y)) scale(1);
+        }
+
+        .foto-centro {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 15px;
+            border: 3px solid #ff3399;
+            box-shadow: 0 0 20px #ff3399;
+            z-index: 10;
+            animation: latido 1.2s infinite;
+            display: none;
+        }
+
+        /* --- ANIMACIONES --- */
+        @keyframes latido {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes flotar {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="fondoEfectos"></canvas>
+
+    <div class="contenedor">
+        <div id="pantalla-contador" class="pantalla activa">
+            <h1 id="numero">3</h1>
+        </div>
+
+        <div id="pantalla-textos" class="pantalla">
+            <h2 id="texto-secuencia">Joyeux</h2>
+        </div>
+
+        <div id="pantalla-carta" class="pantalla">
+            <div class="carta-contenedor" onclick="abrirCarta()">
+                <div class="carta" id="tarjeta">
+                    <div class="cara cara-frontal">
+                        <div class="icono-corazon">🎁</div>
+                        <p style="margin-top: 20px; font-size: 0.9rem;">Toca para abrir</p>
+                    </div>
+                    <div class="cara cara-trasera" onclick="event.stopPropagation();">
+                        <h3>Joyeux anniversaire ma reine 💜 </h3>
+                        <div class="fotos-slider">
+                            <img src="IMG-20251224-WA0115.jpg" alt="Foto 1">
+                            <img src="20260529_162942.jpg" alt="Foto 2">
+                        </div>
+                        <p>"Je t'aime, ma belle reine, et j'espère que nous pourrons passer plus de temps ensemble."</p>
+                        <button class="btn-siguiente" onclick="irAlCorazon()">Ver sorpresa ❤️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pantalla-corazon" class="pantalla">
+            <img src="20260529_162942.jpg" class="foto-centro" id="fotoCentral" alt="Tu Amor">
+            </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN GENERAL ---
+        const NOMBRE_PAREJA = "Estefanny"; // Cambia por el nombre de tu novia/o
+        
+        // Pon aquí los enlaces de las fotos para el corazón final (Se recomiendan unas 15-18 fotos)
+        const URLS_FOTOS_CORAZON = [
+            "IMG-20251224-WA0119.jpg",
+            "IMG-20260316-WA0004.jpg",
+            "IMG-20260516-WA0026.jpg",
+            "Snapchat-1663773313.jpg",
+            "Snapchat-2028672591.jpg",
+            "Snapchat-582431704.jpg",
+            "20251208_133009.jpg",
+            "20251129_173438.jpg",
+            "20251128_135805.jpg",
+            "20251124_114655.jpg",
+            "20250927_125819.jpg",
+            "20260529_162942.jpg",
+            "20250921_171233.jpg",
+            "IMG-20251224-WA0115.jpg",
+            "IMG-20250806-WA0013.jpg",
+            "20260220_153649.jpg"
+        ];
+
+        // --- SISTEMA DE FONDOS (MATRIX Y ESTRELLAS) ---
+        const canvas = document.getElementById('fondoEfectos');
+        const ctx = canvas.getContext('2d');
+        let modoFondo = "matrix"; // 'matrix' o 'estrellas'
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Configuración Matrix
+        const matrixChars = "01011001HAPPYBIRTHDAYLOVE❤️".split("");
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        // Configuración Estrellas
+        const estrellas = Array.from({ length: 100 }, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 2,
+            alpha: Math.random()
+        }));
+
+        function dibujarFondo() {
+            if (modoFondo === "matrix") {
+                ctx.fillStyle = "rgba(5, 5, 5, 0.05)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#ff3399";
+                ctx.font = fontSize + "px monospace";
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            } else if (modoFondo === "estrellas") {
+                ctx.fillStyle = "#050505";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                estrellas.forEach(e => {
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Efecto titileo sutil
+                    e.alpha += (Math.random() - 0.5) * 0.1;
+                });
+            }
+            requestAnimationFrame(dibujarFondo);
+        }
+        dibujarFondo();
+
+        // --- CONTROLADORES DE PANTALLAS Y SECUENCIAS ---
+        
+        // 1. Lógica del conteo regresivo
+        const txtNumero = document.getElementById('numero');
+        let cuenta = 3;
+        const cuentaInterval = setInterval(() => {
+            cuenta--;
+            if (cuenta > 0) {
+                txtNumero.innerText = cuenta;
+            } else {
+                clearInterval(cuentaInterval);
+                cambiarPantalla('pantalla-contador', 'pantalla-textos');
+                iniciarSecuenciaTextos();
+            }
+        }, 1000);
+
+        // 2. Secuencia de palabras de felicitación
+        function iniciarSecuenciaTextos() {
+            const txtSecuencia = document.getElementById('texto-secuencia');
+            const pasos = [
+                { texto: "Anniversaire", tiempo: 1200 },
+                { texto: "TO", tiempo: 2400 },
+                { texto: NOMBRE_PAREJA, tiempo: 3600 },
+                { texto: "💜", tiempo: 5000 }
+            ];
+
+            pasos.forEach(paso => {
+                setTimeout(() => {
+                    txtSecuencia.innerText = paso.texto;
+                }, paso.tiempo);
+            });
+
+            // Transición a la Tarjeta
+            setTimeout(() => {
+                modoFondo = "estrellas"; // Cambiamos el fondo al estilo espacial del video
+                cambiarPantalla('pantalla-textos', 'pantalla-carta');
+            }, 6500);
+        }
+
+        // 3. Mecánica de la Tarjeta Interactiva
+        function abrirCarta() {
+            document.getElementById('tarjeta').classList.add('abierta');
+        }
+
+        function irAlCorazon() {
+            cambiarPantalla('pantalla-carta', 'pantalla-corazon');
+            generarCorazonFotos();
+        }
+
+        // Helper para alternar pantallas
+        function cambiarPantalla(idOcultar, idMostrar) {
+            document.getElementById(idOcultar).classList.remove('activa');
+            document.getElementById(idMostrar).classList.add('activa');
+        }
+
+        // 4. El Gran Final: Collage en forma de Corazón Matemático
+        function generarCorazonFotos() {
+            const contenedorCorazon = document.getElementById('pantalla-corazon');
+            const totalFotos = URLS_FOTOS_CORAZON.length;
+
+            URLS_FOTOS_CORAZON.forEach((url, i) => {
+                const img = document.createElement('img');
+                img.src = url;
+                img.classList.add('foto-corazon');
+                contenedorCorazon.appendChild(img);
+
+                // Ecuación paramétrica del corazón para acomodar las fotos de forma perfecta
+                const t = (i / totalFotos) * 2 * Math.PI;
+                
+                // Multiplicadores para controlar el tamaño del corazón en la pantalla
+                const factorEscalaX = window.innerWidth < 500 ? 12 : 18;
+                const factorEscalaY = window.innerWidth < 500 ? 12 : 18;
+
+                // Fórmulas matemáticas del corazón
+                const x = 16 * Math.pow(Math.sin(t), 3) * factorEscalaX;
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) * factorEscalaY;
+
+                // Guardamos las coordenadas calculadas en variables CSS personalizadas
+                img.style.setProperty('--x', `${x}px`);
+                img.style.setProperty('--y', `${y}px`);
+
+                // Animación de dispersión progresiva (efecto ola)
+                setTimeout(() => {
+                    img.classList.add('posicionada');
+                }, i * 150);
+            });
+
+            // Mostrar la foto del centro al final de la animación del collage
+            setTimeout(() => {
+                const fotoCentral = document.getElementById('fotoCentral');
+                fotoCentral.style.display = 'block';
+            }, totalFotos * 150 + 500);
+        }
+
+        // Ajustar tamaño del Canvas si se rota o cambia el tamaño de la pantalla
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
+
